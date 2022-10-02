@@ -1,0 +1,27 @@
+0000000000002a10 <phase_5>:
+    2a10:	f3 0f 1e fa          	endbr64 
+    2a14:	53                   	push   %rbx 
+    2a15:	48 89 fb             	mov    %rdi,%rbx //rbx为我们输入的内容的地址
+    2a18:	e8 f2 02 00 00       	callq  2d0f <string_length> //测字符串长度
+    2a1d:	83 f8 04             	cmp    $0x4,%eax //eax为string_length的返回值
+    2a20:	75 0c                	jne    2a2e <phase_5+0x1e> //如果字符串长度不为4，则bomb
+    2a22:	b9 01 00 00 00       	mov    $0x1,%ecx //ecx=1
+    2a27:	b8 00 00 00 00       	mov    $0x0,%eax //eax=0
+    2a2c:	eb 1f                	jmp    2a4d <phase_5+0x3d>
+    2a2e:	e8 cb 06 00 00       	callq  30fe <explode_bomb>
+    2a33:	eb ed                	jmp    2a22 <phase_5+0x12>
+    2a35:	48 63 d0             	movslq %eax,%rdx //eax<=3->rdx=eax
+    2a38:	0f b6 14 13          	movzbl (%rbx,%rdx,1),%edx//edx=M(rbx+rdx)=M(eax+rbx),edx为rdx的低位
+    2a3c:	83 e2 07             	and    $0x7,%edx //edx&7.即edx取低7位，其他置零
+    2a3f:	48 8d 35 3a 29 00 00 	lea    0x293a(%rip),%rsi        # 5380 <array.3501> 
+    //0x55f651096380->x/10wd 0x55f651096380->2 6 1 3 4 7 5 8,0x60=6*16=2*2*6*4,偏移量为 0 0 1 4,即要取ascii码低3位为0，0，1，4的数（000,000,001,100)->(h,h,a,l)
+    2a46:	0f af 0c 96          	imul   (%rsi,%rdx,4),%ecx //ecx=ecx*M(rsi+4*rdx)
+    2a4a:	83 c0 01             	add    $0x1,%eax //eax=eax+1
+    2a4d:	83 f8 03             	cmp    $0x3,%eax //eax-3
+    2a50:	7e e3                	jle    2a35 <phase_5+0x25> //eax<=3(如此循环4次)
+    2a52:	83 f9 60             	cmp    $0x60,%ecx //ecx!=0x60,则bomb
+    2a55:	75 02                	jne    2a59 <phase_5+0x49>
+    2a57:	5b                   	pop    %rbx
+    2a58:	c3                   	retq   
+    2a59:	e8 a0 06 00 00       	callq  30fe <explode_bomb>
+    2a5e:	eb f7                	jmp    2a57 <phase_5+0x47>

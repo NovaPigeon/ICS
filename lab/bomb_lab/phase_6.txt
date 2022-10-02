@@ -1,0 +1,392 @@
+   Prepare
+   0x0000556560b8ca60 <+0>:   endbr64
+   0x0000556560b8ca64 <+4>:   push   %r12
+   0x0000556560b8ca66 <+6>:   push   %rbp
+   0x0000556560b8ca67 <+7>:   push   %rbx
+   0x0000556560b8ca68 <+8>:   sub    $0x60,%rsp //rsp-=8*12
+   0x0000556560b8ca6c <+12>:	mov    %fs:0x28,%rax
+   0x0000556560b8ca75 <+21>:	mov    %rax,0x58(%rsp) //M(rsp+8*11)=rax
+   0x0000556560b8ca7a <+26>:	xor    %eax,%eax //eax=0
+   0x0000556560b8ca7c <+28>:	mov    %rsp,%rsi //rsi=rsp
+   nums[6]//6个数，存在栈帧里，从nums[i]=M(R(%rsp)+4*i)
+
+   Part 1
+   0x0000556560b8ca7f <+31>:	callq  0x556560b8d1ec <read_six_numbers>//读入的数放在rsp上
+   0x0000556560b8ca84 <+36>:	mov    $0x0,%ebp //ebp=0
+   0x0000556560b8ca89 <+41>:	jmp    0x556560b8cab2 <phase_6+82>
+   0x0000556560b8ca8b <+43>:	callq  0x556560b8d0fe <explode_bomb>
+   0x0000556560b8ca90 <+48>:	jmp    0x556560b8cac5 <phase_6+101>
+   0x0000556560b8ca92 <+50>:	callq  0x556560b8d0fe <explode_bomb> 
+   内层循环:
+   0x0000556560b8ca97 <+55>:	add    $0x1,%ebx //ebx++
+   0x0000556560b8ca9a <+58>:	cmp    $0x5,%ebx //ebx-5
+   0x0000556560b8ca9d <+61>:	jg     0x556560b8caaf <phase_6+79> //ebx>5
+   0x0000556560b8ca9f <+63>:	movslq %ebp,%rax //rax=ebp
+   0x0000556560b8caa2 <+66>:	movslq %ebx,%rdx //rdx=ebx
+   0x0000556560b8caa5 <+69>:	mov    (%rsp,%rdx,4),%edi //edi=M(rsp+4*rdx)
+   0x0000556560b8caa8 <+72>:	cmp    %edi,(%rsp,%rax,4) //M(rsp+4*rax)-edi
+   0x0000556560b8caab <+75>:	jne    0x556560b8ca97 <phase_6+55> //不相等
+   0x0000556560b8caad <+77>:	jmp    0x556560b8ca92 <phase_6+50> //相等则bomb
+   外层循环:
+   0x0000556560b8caaf <+79>:	mov    %r12d,%ebp //ebp=r12d
+   0x0000556560b8cab2 <+82>:	cmp    $0x5,%ebp //ebp-5
+   0x0000556560b8cab5 <+85>:	jg     0x556560b8cace <phase_6+110> //ebp>5
+   0x0000556560b8cab7 <+87>:	movslq %ebp,%rax //rax=ebp
+   0x0000556560b8caba <+90>:	mov    (%rsp,%rax,4),%eax //eax=M(rsp+4*rax)
+   0x0000556560b8cabd <+93>:	sub    $0x1,%eax //eax--
+   0x0000556560b8cac0 <+96>:	cmp    $0x5,%eax //eax-5
+   0x0000556560b8cac3 <+99>:	ja     0x556560b8ca8b <phase_6+43> //eax>5->bomb
+   0x0000556560b8cac5 <+101>:	lea    0x1(%rbp),%r12d //r12d=rbp+1
+   0x0000556560b8cac9 <+105>:	mov    %r12d,%ebx //ebx=r12d
+   0x0000556560b8cacc <+108>:	jmp    0x556560b8ca9a <phase_6+58>
+   while(rbp<=5)
+    {
+        rax=rbp;
+        rax=nums[rax];
+        rax--;
+        if(rax>5)
+            return 0;
+        r12=rbp+1;
+        rbx=r12;
+        while(rbx<=5)
+        {
+            rax=rbp;
+            rdx=rbx;
+            rdi=nums[rdx];
+            if(rdi==nums[rax])//nums[rbx]==nums[rbp]
+                return 0;
+            rbx++;
+        }
+        rbp=r12;
+        /*
+        int i=0;
+        for(int i=0;i<=5;++i)
+        {
+            int numi=nums[i]-1;
+            if(numi>5)
+                return 0;//判断该数是否小于等于6
+            for(int j=i+1;j<=5;++j)
+            {
+                if(nums[i]==nums[j])
+                    return 0;//判断是否有重复的数
+            }
+            
+        }
+        */
+    }
+   
+   
+   Part 2
+   0x0000556560b8cace <+110>:	mov    $0x0,%eax //eax=0
+   0x0000556560b8cad3 <+115>:	jmp    0x556560b8cae6 <phase_6+134>
+   0x0000556560b8cad5 <+117>:	movslq %eax,%rcx //rcx=eax
+   0x0000556560b8cad8 <+120>:	mov    $0x7,%edx //edx=7
+   0x0000556560b8cadd <+125>:	sub    (%rsp,%rcx,4),%edx //edx=edx-M(rsp+4*rcx)
+   0x0000556560b8cae0 <+128>:	mov    %edx,(%rsp,%rcx,4) //M(rsp+4*rcx)=edx
+   0x0000556560b8cae3 <+131>:	add    $0x1,%eax //eax++
+   0x0000556560b8cae6 <+134>:	cmp    $0x5,%eax //eax-5
+   0x0000556560b8cae9 <+137>:	jle    0x556560b8cad5 <phase_6+117> //eax<=5
+   for(int i=0;i<=5;++i)
+      nums[i]=7-nums[i];
+   
+   Part 3
+   0x0000556560b8caeb <+139>:	mov    $0x0,%esi //esi=0
+   0x0000556560b8caf0 <+144>:	jmp    0x556560b8cb09 <phase_6+169>
+   0x0000556560b8caf2 <+146>:	mov    0x8(%rdx),%rdx //rdx=M(rdx+8)
+   0x0000556560b8caf6 <+150>:	add    $0x1,%eax //eax++ 
+   0x0000556560b8caf9 <+153>:	movslq %esi,%rcx //rcx=esi
+   0x0000556560b8cafc <+156>:	cmp    %eax,(%rsp,%rcx,4) //M(rsp+4*rcx)-eax
+   0x0000556560b8caff <+159>:	jg     0x556560b8caf2 <phase_6+146> //大于
+   0x0000556560b8cb01 <+161>:	mov    %rdx,0x20(%rsp,%rcx,8) //M(rsp+8*rcx+0x20)=rdx
+   0x0000556560b8cb06 <+166>:	add    $0x1,%esi //esi++
+   0x0000556560b8cb09 <+169>:	cmp    $0x5,%esi //esi-5
+   0x0000556560b8cb0c <+172>:	jg     0x556560b8cb1c <phase_6+188> //大于
+   0x0000556560b8cb0e <+174>:	mov    $0x1,%eax  //eax=1
+   0x0000556560b8cb13 <+179>:	lea    0x6716(%rip),%rdx  //rdx=0x556560b93230      # 0x556560b93230 <node1>
+   0x0000556560b8cb1a <+186>:	jmp    0x556560b8caf9 <phase_6+153>
+   for(int i=0;i<=5;++i)
+    {
+        int j=1;
+        node* nodep_temp=&nodes[0];
+        while(nums[i]>j)
+        {
+            nodep_temp=nodep_temp->next;
+            j++;
+        }
+        nodep[i]=nodep_temp;
+    }
+    3 6 1 5 2 4
+    0:3 &nodes[2]
+    1:6 &nodes[5]
+    ...
+    nodep[6]={&node[2],&node[5],&node[0],&node[4],&node[1],&node[3]}
+    将各个node的地址存入栈帧中
+
+   0x0000556560b8cb1c <+188>:	mov    0x20(%rsp),%rbx //rbx=M(0x20+rsp) 
+   0x0000556560b8cb21 <+193>:	mov    %rbx,%rcx //rcx=rbx
+   0x0000556560b8cb24 <+196>:	mov    $0x1,%eax //eax=1
+   0x0000556560b8cb29 <+201>:	jmp    0x556560b8cb3d <phase_6+221>
+   0x0000556560b8cb2b <+203>:	movslq %eax,%rdx //rdx=eax
+   0x0000556560b8cb2e <+206>:	mov    0x20(%rsp,%rdx,8),%rdx //rdx=M(0x20+rsp+8*rdx)
+   0x0000556560b8cb33 <+211>:	mov    %rdx,0x8(%rcx) //M(rcx+8)=rdx
+   0x0000556560b8cb37 <+215>:	add    $0x1,%eax //eax++
+   0x0000556560b8cb3a <+218>:	mov    %rdx,%rcx //rcx=rdx
+   0x0000556560b8cb3d <+221>:	cmp    $0x5,%eax //eax-5
+   0x0000556560b8cb40 <+224>:	jle    0x556560b8cb2b <phase_6+203> //eax<=5
+   0x0000556560b8cb42 <+226>:	movq   $0x0,0x8(%rcx) //M(8+rcx)=0
+   0x0000556560b8cb4a <+234>:	mov    $0x0,%ebp //ebp=0
+   0x0000556560b8cb4f <+239>:	jmp    0x556560b8cb58 <phase_6+248>
+   0x0000556560b8cb51 <+241>:	mov    0x8(%rbx),%rbx //rbx=M(rbx+8)
+   0x0000556560b8cb55 <+245>:	add    $0x1,%ebp //ebp++
+   0x0000556560b8cb58 <+248>:	cmp    $0x4,%ebp //ebp-4
+   0x0000556560b8cb5b <+251>:	jg     0x556560b8cb6e <phase_6+270> //ebp>4
+   0x0000556560b8cb5d <+253>:	mov    0x8(%rbx),%rax //rax=M(8+rbx)
+   0x0000556560b8cb61 <+257>:	mov    (%rax),%eax //eax=M(rax)
+   0x0000556560b8cb63 <+259>:	cmp    %eax,(%rbx) //M(rbx)-eax
+   0x0000556560b8cb65 <+261>:	jge    0x556560b8cb51 <phase_6+241> //大于等于，否则bomb
+   0x0000556560b8cb67 <+263>:	callq  0x556560b8d0fe <explode_bomb>
+   0x0000556560b8cb6c <+268>:	jmp    0x556560b8cb51 <phase_6+241>
+   0x0000556560b8cb6e <+270>:	mov    0x58(%rsp),%rax //rax=M(0x58+rsp)
+   0x0000556560b8cb73 <+275>:	xor    %fs:0x28,%rax 
+   0x0000556560b8cb7c <+284>:	jne    0x556560b8cb87 <phase_6+295> //判断是否发生缓冲区溢出
+   0x0000556560b8cb7e <+286>:	add    $0x60,%rsp
+   0x0000556560b8cb82 <+290>:	pop    %rbx
+   0x0000556560b8cb83 <+291>:	pop    %rbp
+   0x0000556560b8cb84 <+292>:	pop    %r12
+   0x0000556560b8cb86 <+294>:	retq
+   0x0000556560b8cb87 <+295>:	callq  0x556560b8c290 <__stack_chk_fail@plt>
+
+
+   00000000000031ec <read_six_numbers>:
+    31ec:	f3 0f 1e fa          	endbr64 
+    31f0:	48 83 ec 08          	sub    $0x8,%rsp
+    31f4:	48 89 f2             	mov    %rsi,%rdx
+    31f7:	48 8d 4e 04          	lea    0x4(%rsi),%rcx
+    31fb:	48 8d 46 14          	lea    0x14(%rsi),%rax
+    31ff:	50                   	push   %rax
+    3200:	48 8d 46 10          	lea    0x10(%rsi),%rax
+    3204:	50                   	push   %rax
+    3205:	4c 8d 4e 0c          	lea    0xc(%rsi),%r9
+    3209:	4c 8d 46 08          	lea    0x8(%rsi),%r8
+    320d:	48 8d 35 80 24 00 00 	lea    0x2480(%rip),%rsi        # 5694 <array.3501+0x314>
+    3214:	b8 00 00 00 00       	mov    $0x0,%eax
+    3219:	e8 32 f1 ff ff       	callq  2350 <__isoc99_sscanf@plt>
+    321e:	48 83 c4 10          	add    $0x10,%rsp
+    3222:	83 f8 05             	cmp    $0x5,%eax
+    3225:	7e 05                	jle    322c <read_six_numbers+0x40>
+    3227:	48 83 c4 08          	add    $0x8,%rsp
+    322b:	c3                   	retq   
+    322c:	e8 cd fe ff ff       	callq  30fe <explode_bomb>
+
+    0000000000002350 <__isoc99_sscanf@plt>:
+    2350:	f3 0f 1e fa          	endbr64 
+    2354:	f2 ff 25 25 5c 00 00 	bnd jmpq *0x5c25(%rip)        # 7f80 <__isoc99_sscanf@GLIBC_2.7>
+    235b:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+
+
+
+
+
+
+(gdb) x/28 0x5610b533b230
+0x5610b533b230 <node1>:	0x00000294	0x00000001	0xb533b240	0x00005610 ->660
+0x5610b533b240 <node2>:	0x000001d1	0x00000002	0xb533b250	0x00005610 ->465
+0x5610b533b250 <node3>:	0x000003c9	0x00000003	0xb533b260	0x00005610 ->969
+0x5610b533b260 <node4>:	0x000000ef	0x00000004	0xb533b270	0x00005610 ->239
+0x5610b533b270 <node5>:	0x0000025f	0x00000005	0xb533a120	0x00005610 ->607
+0x5610b533b280 <host_table>:	0xb53376ea	0x00005610	0xb53376f3	0x00005610
+0x5610b533b290 <host_table+16>:	0xb53376fd	0x00005610	0xb5337704	0x00005610
+(gdb) x/8 0x5610b533a120
+0x5610b533a120 <node6>:	0x0000033e	0x00000006	0x00000000	0x00000000 ->830
+0x5610b533a130:	0x00000000	0x00000000	0x00000000	0x00000000
+
+3 6 1 5 2 4
+4 1 6 2 5 3
+
+
+
+
+TO_CPP:
+#include <iostream>
+#include <stack>
+using namespace std;
+int rs = 0;
+int rax, rsp, eax, rbp, rbx, ebp, rsi, r12,rdx,rdi,rcx;
+int nums[6];
+stack<int> s;
+void bomb()
+{
+    printf("bomb!");
+}
+struct node
+{
+    int value;
+    int order;
+    node* next;
+}nodes[6]={{660,1,&nodes[1]},{465,2,&nodes[2]},{969,3,&nodes[3]},{239,4,&nodes[4]},{607,5,&nodes[5]},{830,6,0}};
+node* nodep[6];
+int main()
+{
+
+    /*
+    s.push(r12);
+    s.push(rbp);
+    s.push(rbx);
+    s.push(0x28);
+    s.push(0x556560b8ca84);
+    */
+    rbp=0;
+    for(int i=0;i<6;++i)
+        cin>>nums[i];
+    while(rbp<=5)
+    {
+        rax=rbp;
+        rax=nums[rax];
+        rax--;
+        if(rax>5)
+        {
+            bomb();
+            cout<<"bug 1";
+            return 0;
+        }
+        r12=rbp+1;
+        rbx=r12;
+        while(rbx<=5)
+        {
+            rax=rbp;
+            rdx=rbx;
+            rdi=nums[rdx];
+            if(rdi==nums[rax])//nums[rbx]==nums[rbp]
+            {
+                bomb();
+                cout<<"bug 2";
+                return 0;
+            }
+            rbx++;
+        }
+        rbp=r12;
+        /*
+        int i=0;
+        for(int i=0;i<=5;++i)
+        {
+            int numi=nums[i]-1;
+            if(numi>5)
+                return 0;//判断该数是否小于等于6
+            for(int j=i+1;j<=5;++j)
+            {
+                if(nums[i]==nums[j])
+                    return 0;//判断是否有重复的数
+            }
+            
+        }
+        */
+    }
+    rax=0;
+    while(rax<=5)
+    {
+        rcx=rax;
+        rdx=7;
+        rdx=rdx-nums[rcx];
+        nums[rcx]=rdx;//nums[i]=7-nums[i]
+        rax++;
+    }
+    /*
+    for(int i=0;i<=5;++i)
+        nums[i]=7-nums[i];
+    */
+    rsi=0;
+    node* rdx_;
+    while(rsi<=5)
+    {
+        rax=1;
+        rdx_=&nodes[0];
+        rcx=rsi;
+        while(nums[rcx]>rax)
+        {
+            rdx_=rdx_->next;
+            rax++;
+            rcx=rsi;
+        }
+        nodep[rcx]=rdx_;
+        rsi++;
+    }
+
+    /*
+    for(int i=0;i<=5;++i)
+    {
+        int j=1;
+        node* nodep_temp=&nodes[0];
+        while(nums[i]>j)
+        {
+            nodep_temp=nodep_temp->next;
+            j++;
+        }
+        nodep[i]=nodep_temp;
+    }
+    3 6 1 5 2 4
+    -> 4 1 6 2 5 3
+    0:4 &nodes[3]
+    1:1 &nodes[0]
+    ...
+    nodep[6]={&node[3],&node[0],&node[5],&node[1],&node[4],&node[2]}
+    将各个node的地址存入栈帧中
+    */
+    node* rbx_=nodep[0];
+    node* rcx_=rbx_;
+    rax=1;
+    while(rax<=5)
+    {
+        rdx=rax;
+        node* rdx_=nodep[rdx];
+        rcx_->next=rdx_;
+        rax++;
+        rcx_=rdx_;
+    }
+    rcx_->next=0;
+    /*
+    1: rdx=nodep[1],nodep[0].next=nodep[1],rcx=nodep[1]
+    2: rdx=nodep[2],nodep[1].next=nodep[2],rcx=nodep[2]
+    ...
+    nodep[5].next=NULL
+    
+    for(int i=1;i<=5;++i)
+        nodep[i-1].next=nodep[i];    
+    */
+    rbp=0;
+    while(rbp<=4)
+    {
+        node* rax_=rbx_->next;
+        rax=rax_->value;
+        if(rbx_->value>=rax)
+        {
+            rbx_=rbx_->next;
+            rbp++;
+        }
+        else
+        {
+            bomb();
+            cout<<"bug 3";
+            return 0;
+        }
+    }
+    /*
+    0:rax_=nodep[0].next,rax=nodep[1].value,
+    -> nodep[1].value>nodep[0].value -> bomb
+
+    for(int i=0;i<=4;++i)
+    {
+        if(nodep[i].value>=nodep[i+1].value)
+            continue;
+        else
+        {
+            bomb();
+            return 0;
+        }
+    }//链表的值应该从大到小排列
+    */
+    printf("Defuses!");
+    return 0;
+}
+
+
+   

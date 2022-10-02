@@ -1,0 +1,18 @@
+Starting program: /home/i2100012945/bomb/my-bomb-556/bomb ./sol.txt
+warning: Error disabling address space randomization: Operation not permitted
+Welcome to Dr. Evil's little bomb. You have 6 phases with
+which to blow yourself up. Have a nice day! Mua ha ha ha!
+Phase 1 defused. How about the next one?
+That's number 2. Keep going!
+Halfway there!
+So you got that one.  Try this one.
+Good work!  On to the next...
+Curses, you've found the secret phase!
+But finding it and solving it are quite different...
+Bravo! You've defused the secret stage!
+	Dr. Evil finally knew that the students at PKU are not easy to defeat.
+	He fled in haste, but you know it is not over...
+	"A sleepless malice", uttered you as you caught a whiff of the next trouble...
+Congratulations! You've defused the bomb!
+Your instructor has been notified and will verify your solution.
+[Inferior 1 (process 6258) exited normally]

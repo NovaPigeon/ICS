@@ -1,0 +1,88 @@
+0000000000002950 <func4>:
+    2950:	f3 0f 1e fa          	endbr64 
+    2954:	48 83 ec 08          	sub    $0x8,%rsp
+    2958:	89 d1                	mov    %edx,%ecx //ecx=edx=15  ecx=edx
+    295a:	29 f1                	sub    %esi,%ecx //ecx=ecx-esi=edx-esi=15 ecx=edx-esi
+    295c:	89 c8                	mov    %ecx,%eax //eax=ecx=15 eax=edx-esi
+    295e:	c1 e8 1f             	shr    $0x1f,%eax //eax=0 eax>>=31(逻辑，取符号),eax=0
+    2961:	01 c8                	add    %ecx,%eax //eax=15 eax=ecx+eax=edx-esi+sign
+    2963:	d1 f8                	sar    %eax //sar %eax,1  eax=7 eax=eax/2=(edx-esi+sign)/2
+    2965:	01 f0                	add    %esi,%eax //eax=7 eax=eax+esi=(edx-esi+sign)/2+esi
+    2967:	39 f8                	cmp    %edi,%eax //7-M(rsp) eax-edi=(edx-esi+sign)/2+esi-M(rsp)
+    2969:	7f 0c                	jg     2977 <func4+0x27> 
+    296b:	7c 16                	jl     2983 <func4+0x33> 
+    296d:	b8 00 00 00 00       	mov    $0x0,%eax //eax==7,eax=0
+    2972:	48 83 c4 08          	add    $0x8,%rsp //rsp=rsp(最开始有sub)
+    2976:	c3                   	retq   
+    2977:	8d 50 ff             	lea    -0x1(%rax),%edx //edi<7,edx=rax-1
+    297a:	e8 d1 ff ff ff       	callq  2950 <func4>
+    297f:	01 c0                	add    %eax,%eax //eax=2*eax
+    2981:	eb ef                	jmp    2972 <func4+0x22>
+    2983:	8d 70 01             	lea    0x1(%rax),%esi //edi>7 ,esi=rax+1
+    2986:	e8 c5 ff ff ff       	callq  2950 <func4>
+    298b:	8d 44 00 01          	lea    0x1(%rax,%rax,1),%eax //eax=rax*2+1
+    298f:	eb e1                	jmp    2972 <func4+0x22>
+
+0000000000002991 <phase_4>:
+    2991:	f3 0f 1e fa          	endbr64 
+    2995:	48 83 ec 18          	sub    $0x18,%rsp
+    2999:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax
+    29a0:	00 00 
+    29a2:	48 89 44 24 08       	mov    %rax,0x8(%rsp)
+    29a7:	31 c0                	xor    %eax,%eax
+    29a9:	48 8d 4c 24 04       	lea    0x4(%rsp),%rcx
+    29ae:	48 89 e2             	mov    %rsp,%rdx
+    29b1:	48 8d 35 e8 2c 00 00 	lea    0x2ce8(%rip),%rsi        # 56a0 <array.3501+0x320> //->x/s 0x5565dbc516a0 ,得"%d %d"
+    29b8:	e8 93 f9 ff ff       	callq  2350 <__isoc99_sscanf@plt>
+    29bd:	83 f8 02             	cmp    $0x2,%eax
+    29c0:	75 0c                	jne    29ce <phase_4+0x3d>
+    29c2:	8b 04 24             	mov    (%rsp),%eax //eax=M(rsp)
+    29c5:	85 c0                	test   %eax,%eax //eax&eax
+    29c7:	78 05                	js     29ce <phase_4+0x3d> //如果符号位为1，则bomb
+    29c9:	83 f8 0e             	cmp    $0xe,%eax //eax-15
+    29cc:	7e 05                	jle    29d3 <phase_4+0x42> //eax<=15, 0=<M(rsp)<=15
+    29ce:	e8 2b 07 00 00       	callq  30fe <explode_bomb>
+    29d3:	ba 0e 00 00 00       	mov    $0xe,%edx //edx=15
+    29d8:	be 00 00 00 00       	mov    $0x0,%esi //esi=0
+    29dd:	8b 3c 24             	mov    (%rsp),%edi //edi=M(rsp)
+    29e0:	e8 6b ff ff ff       	callq  2950 <func4>
+    29e5:	83 f8 05             	cmp    $0x5,%eax //eax=5,否则bomb(即func4的返回值为5)
+    29e8:	75 07                	jne    29f1 <phase_4+0x60>
+    29ea:	83 7c 24 04 05       	cmpl   $0x5,0x4(%rsp) //M(rsp+4)=5,否则bomb
+    29ef:	74 05                	je     29f6 <phase_4+0x65> 
+    29f1:	e8 08 07 00 00       	callq  30fe <explode_bomb>
+    29f6:	48 8b 44 24 08       	mov    0x8(%rsp),%rax rax=M(rsp+8)
+    29fb:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax
+    2a02:	00 00 
+    2a04:	75 05                	jne    2a0b <phase_4+0x7a>
+    2a06:	48 83 c4 18          	add    $0x18,%rsp
+    2a0a:	c3                   	retq   
+    2a0b:	e8 80 f8 ff ff       	callq  2290 <__stack_chk_fail@plt>
+
+
+func4:
+int a=0,c=0,d=15,s=0,x=11;
+int func4()
+{
+   c=d-s;
+  a=c;
+  a=((a>>31)&1);
+  a=a+c;
+  a=(a>>1);
+  a=a+s;
+  if(x<a)
+  {
+    d=a-1;
+    func();
+    a=2*a;
+  }
+  else if(x>a)
+  {
+    s=a+1;
+    func();
+    a=2*a+1;
+  }
+  else if(x==a)
+    a=0;
+  return a;
+}
