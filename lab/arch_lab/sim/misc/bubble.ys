@@ -1,0 +1,55 @@
+# 寿晨宸 2100012945
+    .pos 0
+    irmovq stack,%rsp
+    call main
+    halt
+    .align 8
+Array:
+    .quad 0xbca
+    .quad 0xcba
+    .quad 0xacb
+    .quad 0xcab
+    .quad 0xabc
+    .quad 0xbac
+main: 
+    irmovq Array,%rdi
+    irmovq $6,%rsi
+    call bubble_sort
+    ret
+bubble_sort:
+    pushq %rbp #last
+    pushq %rbx #i
+    rrmovq %rdi,%rbp
+    irmovq $40,%r8
+    addq %r8,%rbp # last=data+count-1
+    jmp test1
+loop1:#外层循环
+    rrmovq %rdi,%rbx # i=data
+    jmp test2
+loop2:#内层循环
+    mrmovq (%rbx),%r8 # t1=*(i)
+    mrmovq 8(%rbx),%r9 # t2=*(i+1)
+    subq %r9,%r8 # t1=*(i)-*(i+1)
+    jle done # *(i)<=*(i+1)
+    mrmovq (%rbx),%r8 # t1=*i
+    rmmovq %r8,8(%rbx) # *(i+1)=*i
+    rmmovq %r9,(%rbx) # *i=t2
+done:
+    irmovq $8,%r8
+    addq %r8,%rbx # i++
+test2: # i<last
+    rrmovq %rbp,%r8 # t=last
+    subq %rbx,%r8 # t=last-i
+    jg loop2
+    irmovq $8,%r8
+    subq %r8,%rbp # last--
+test1:# last>data
+    rrmovq %rbp,%r8 # t=last
+    subq %rdi,%r8 # t=last-data
+    jg loop1
+    popq %rbx
+    popq %rbp
+    ret
+    
+    .pos 0x200
+stack:
