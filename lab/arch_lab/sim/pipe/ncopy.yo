@@ -1,0 +1,178 @@
+                            | #/* $begin ncopy-ys */
+                            | # 寿晨宸 2100012945 #
+                            | # 1. 将所有能改成 iaddq 的 改成 iaddq
+                            | # 2. 删去 xorq %rax,%rax，只调用一次，初始时就为零
+                            | # 3. 将 iaddq $-1,%rdx 移动到 jg Loop 上方，删去 andq %rdx,%rdx，利用 iaddq 设置的条件码
+                            | # 4. 循环展开 9 路
+                            | ##################################################################
+                            | # ncopy.ys - Copy a src block of len words to dst.
+                            | # Return the number of positive words (>0) contained in src.
+                            | #
+                            | # Include your name and ID here.
+                            | #
+                            | # Describe how and why you modified the baseline code.
+                            | #
+                            | ##################################################################
+                            | # Do not modify this portion
+                            | # Function prologue.
+                            | # %rdi = src, %rsi = dst, %rdx = len
+0x000:                      | ncopy:
+                            | 
+                            | ##################################################################
+                            | # You can modify this portion
+                            |     # Loop header
+0x000: c0f2f7ffffffffffffff |     iaddq $-9,%rdx
+0x00a: 72ab01000000000000   |     jl Remaining_elements #如果len<9(同时作为循环展开不越界的控制)
+0x013:                      | Loop: #同时取9个数，并将这9个数存入src
+0x013: 50370000000000000000 |     mrmovq (%rdi),%rbx
+0x01d: 50570800000000000000 |     mrmovq 8(%rdi),%rbp
+0x027: 50171000000000000000 |     mrmovq 16(%rdi),%rcx
+0x031: 50871800000000000000 |     mrmovq 24(%rdi),%r8
+0x03b: 50972000000000000000 |     mrmovq 32(%rdi),%r9
+0x045: 50a72800000000000000 |     mrmovq 40(%rdi),%r10
+0x04f: 50b73000000000000000 |     mrmovq 48(%rdi),%r11
+0x059: 50c73800000000000000 |     mrmovq 56(%rdi),%r12
+0x063: 50d74000000000000000 |     mrmovq 64(%rdi),%r13
+                            | 
+0x06d: 40360000000000000000 |     rmmovq %rbx,(%rsi)
+0x077: 40560800000000000000 |     rmmovq %rbp,8(%rsi)
+0x081: 40161000000000000000 |     rmmovq %rcx,16(%rsi)
+0x08b: 40861800000000000000 |     rmmovq %r8,24(%rsi)
+0x095: 40962000000000000000 |     rmmovq %r9,32(%rsi)
+0x09f: 40a62800000000000000 |     rmmovq %r10,40(%rsi)
+0x0a9: 40b63000000000000000 |     rmmovq %r11,48(%rsi)
+0x0b3: 40c63800000000000000 |     rmmovq %r12,56(%rsi)
+0x0bd: 40d64000000000000000 |     rmmovq %r13,64(%rsi)
+                            |     #依次判断读出的数的正负
+                            | # ele 1
+0x0c7: 6233                 |     andq %rbx,%rbx
+0x0c9: 71dc00000000000000   |     jle judge_1
+0x0d2: c0f00100000000000000 |     iaddq $1,%rax
+0x0dc:                      | judge_1:
+                            | # ele 2
+0x0dc: 6255                 |     andq %rbp,%rbp
+0x0de: 71f100000000000000   |     jle judge_2
+0x0e7: c0f00100000000000000 |     iaddq $1,%rax
+0x0f1:                      | judge_2:
+                            | # ele 3
+0x0f1: 6211                 |     andq %rcx,%rcx
+0x0f3: 710601000000000000   |     jle judge_3
+0x0fc: c0f00100000000000000 |     iaddq $1,%rax
+0x106:                      | judge_3:
+                            | # ele 4
+0x106: 6288                 |     andq %r8,%r8
+0x108: 711b01000000000000   |     jle judge_4
+0x111: c0f00100000000000000 |     iaddq $1,%rax
+0x11b:                      | judge_4:
+                            | # ele 5
+0x11b: 6299                 |     andq %r9,%r9
+0x11d: 713001000000000000   |     jle judge_5
+0x126: c0f00100000000000000 |     iaddq $1,%rax
+0x130:                      | judge_5:
+                            | # ele 6
+0x130: 62aa                 |     andq %r10,%r10
+0x132: 714501000000000000   |     jle judge_6
+0x13b: c0f00100000000000000 |     iaddq $1,%rax
+0x145:                      | judge_6:
+                            | # ele 7
+0x145: 62bb                 |     andq %r11,%r11
+0x147: 715a01000000000000   |     jle judge_7
+0x150: c0f00100000000000000 |     iaddq $1,%rax
+0x15a:                      | judge_7:
+                            | # ele 8
+0x15a: 62cc                 |     andq %r12,%r12
+0x15c: 716f01000000000000   |     jle judge_8
+0x165: c0f00100000000000000 |     iaddq $1,%rax
+0x16f:                      | judge_8:
+                            | # ele 9
+0x16f: 62dd                 |     andq %r13,%r13
+0x171: 718401000000000000   |     jle judge_9
+0x17a: c0f00100000000000000 |     iaddq $1,%rax
+0x184:                      | judge_9:
+0x184: c0f74800000000000000 |     iaddq $72,%rdi #src+=9
+0x18e: c0f64800000000000000 |     iaddq $72,%rsi #dst+=9
+0x198: c0f2f7ffffffffffffff |     iaddq $-9,%rdx #len-=9
+0x1a2: 751300000000000000   |     jge Loop 
+                            | 
+0x1ab:                      | Remaining_elements:#余数处理
+0x1ab: c0f20900000000000000 |     iaddq $9,%rdx
+0x1b5: 738b03000000000000   |     je Done #余数为0，则结束循环
+                            |     #否则，一个一个处理过去
+                            | # elements 1
+0x1be: 50370000000000000000 |     mrmovq (%rdi),%rbx
+0x1c8: 40360000000000000000 |     rmmovq %rbx,(%rsi)
+0x1d2: 6233                 |     andq %rbx,%rbx # val<=0?
+0x1d4: 71e701000000000000   |     jle judger_1
+0x1dd: c0f00100000000000000 |     iaddq $1,%rax
+0x1e7:                      | judger_1:
+0x1e7: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x1f1: 738b03000000000000   |     je Done
+                            | # elements 2
+0x1fa: 50370800000000000000 |     mrmovq 8(%rdi),%rbx
+0x204: 40360800000000000000 |     rmmovq %rbx,8(%rsi)
+0x20e: 6233                 |     andq %rbx,%rbx
+0x210: 712302000000000000   |     jle judger_2
+0x219: c0f00100000000000000 |     iaddq $1,%rax
+0x223:                      | judger_2:
+0x223: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x22d: 738b03000000000000   |     je Done
+                            | # elements 3
+0x236: 50371000000000000000 |     mrmovq 16(%rdi),%rbx
+0x240: 40361000000000000000 |     rmmovq %rbx,16(%rsi)
+0x24a: 6233                 |     andq %rbx,%rbx
+0x24c: 715f02000000000000   |     jle judger_3
+0x255: c0f00100000000000000 |     iaddq $1,%rax
+0x25f:                      | judger_3:
+0x25f: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x269: 738b03000000000000   |     je Done
+                            | # elements 4
+0x272: 50371800000000000000 |     mrmovq 24(%rdi),%rbx
+0x27c: 40361800000000000000 |     rmmovq %rbx,24(%rsi)
+0x286: 6233                 |     andq %rbx,%rbx
+0x288: 719b02000000000000   |     jle judger_4
+0x291: c0f00100000000000000 |     iaddq $1,%rax
+0x29b:                      | judger_4:
+0x29b: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x2a5: 738b03000000000000   |     je Done
+                            | # elements 5
+0x2ae: 50372000000000000000 |     mrmovq 32(%rdi),%rbx
+0x2b8: 40362000000000000000 |     rmmovq %rbx,32(%rsi)
+0x2c2: 6233                 |     andq %rbx,%rbx
+0x2c4: 71d702000000000000   |     jle judger_5
+0x2cd: c0f00100000000000000 |     iaddq $1,%rax
+0x2d7:                      | judger_5:
+0x2d7: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x2e1: 738b03000000000000   |     je Done
+                            | # elements 6
+0x2ea: 50372800000000000000 |     mrmovq 40(%rdi),%rbx
+0x2f4: 40362800000000000000 |     rmmovq %rbx,40(%rsi)
+0x2fe: 6233                 |     andq %rbx,%rbx
+0x300: 711303000000000000   |     jle judger_6
+0x309: c0f00100000000000000 |     iaddq $1,%rax
+0x313:                      | judger_6:
+0x313: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x31d: 738b03000000000000   |     je Done
+                            | # elements 7
+0x326: 50373000000000000000 |     mrmovq 48(%rdi),%rbx
+0x330: 40363000000000000000 |     rmmovq %rbx,48(%rsi)
+0x33a: 6233                 |     andq %rbx,%rbx
+0x33c: 714f03000000000000   |     jle judger_7
+0x345: c0f00100000000000000 |     iaddq $1,%rax
+0x34f:                      | judger_7:
+0x34f: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x359: 738b03000000000000   |     je Done
+                            | # elements 8
+0x362: 50373800000000000000 |     mrmovq 56(%rdi),%rbx
+0x36c: 40363800000000000000 |     rmmovq %rbx,56(%rsi)
+0x376: 6233                 |     andq %rbx,%rbx
+0x378: 718b03000000000000   |     jle Done
+0x381: c0f00100000000000000 |     iaddq $1,%rax
+                            | ##################################################################
+                            | # Do not modify the following section of code
+                            | # Function epilogue.
+0x38b:                      | Done:
+0x38b: 90                   |     ret
+                            | ##################################################################
+                            | # Keep the following label at the end of your function
+0x38c:                      | End:
+                            | #/* $end ncopy-ys */

@@ -2,16 +2,21 @@
                             | # Test for copying block of size 4;
                             | #######################################################################
 0x000:                      | 	.pos 0
-0x000: 30f47001000000000000 | main:	irmovq Stack, %rsp  	# Set up stack pointer
+0x000: 30f4a004000000000000 | main:	irmovq Stack, %rsp  	# Set up stack pointer
                             | 
                             | 	# Set up arguments for copy function and then invoke it
 0x00a: 30f20400000000000000 | 	irmovq $4, %rdx		# src and dst have 4 elements
-0x014: 30f6c800000000000000 | 	irmovq dest, %rsi	# dst array
-0x01e: 30f79000000000000000 | 	irmovq src, %rdi	# src array
+0x014: 30f6f803000000000000 | 	irmovq dest, %rsi	# dst array
+0x01e: 30f7c003000000000000 | 	irmovq src, %rdi	# src array
 0x028: 803200000000000000   | 	call ncopy		 
 0x031: 00                   | 	halt			# should halt with num nonzeros in %rax
 0x032:                      | StartFun:
                             | #/* $begin ncopy-ys */
+                            | # 寿晨宸 2100012945 #
+                            | # 1. 将所有能改成 iaddq 的 改成 iaddq
+                            | # 2. 删去 xorq %rax,%rax，只调用一次，初始时就为零
+                            | # 3. 将 iaddq $-1,%rdx 移动到 jg Loop 上方，删去 andq %rdx,%rdx，利用 iaddq 设置的条件码
+                            | # 4. 循环展开 9 路
                             | ##################################################################
                             | # ncopy.ys - Copy a src block of len words to dst.
                             | # Return the number of positive words (>0) contained in src.
@@ -28,74 +33,203 @@
                             | 
                             | ##################################################################
                             | # You can modify this portion
-                            | 	# Loop header
-0x032: 6300                 | 	xorq %rax,%rax		# count = 0;
-0x034: 6222                 | 	andq %rdx,%rdx		# len <= 0?
-0x036: 718f00000000000000   | 	jle Done		# if so, goto Done:
+                            |     # Loop header
+0x032: c0f2f7ffffffffffffff |     iaddq $-9,%rdx
+0x03c: 72dd01000000000000   |     jl Remaining_elements #如果len<9(同时作为循环展开不越界的控制)
+0x045:                      | Loop: #同时取9个数，并将这9个数存入src
+0x045: 50370000000000000000 |     mrmovq (%rdi),%rbx
+0x04f: 50570800000000000000 |     mrmovq 8(%rdi),%rbp
+0x059: 50171000000000000000 |     mrmovq 16(%rdi),%rcx
+0x063: 50871800000000000000 |     mrmovq 24(%rdi),%r8
+0x06d: 50972000000000000000 |     mrmovq 32(%rdi),%r9
+0x077: 50a72800000000000000 |     mrmovq 40(%rdi),%r10
+0x081: 50b73000000000000000 |     mrmovq 48(%rdi),%r11
+0x08b: 50c73800000000000000 |     mrmovq 56(%rdi),%r12
+0x095: 50d74000000000000000 |     mrmovq 64(%rdi),%r13
                             | 
-0x03f: 50a70000000000000000 | Loop:	mrmovq (%rdi), %r10	# read val from src...
-0x049: 40a60000000000000000 | 	rmmovq %r10, (%rsi)	# ...and store it to dst
-0x053: 62aa                 | 	andq %r10, %r10		# val <= 0?
-0x055: 716a00000000000000   | 	jle Npos		# if so, goto Npos:
-0x05e: 30fa0100000000000000 | 	irmovq $1, %r10
-0x068: 60a0                 | 	addq %r10, %rax		# count++
-0x06a: 30fa0100000000000000 | Npos:	irmovq $1, %r10
-0x074: 61a2                 | 	subq %r10, %rdx		# len--
-0x076: 30fa0800000000000000 | 	irmovq $8, %r10
-0x080: 60a7                 | 	addq %r10, %rdi		# src++
-0x082: 60a6                 | 	addq %r10, %rsi		# dst++
-0x084: 6222                 | 	andq %rdx,%rdx		# len > 0?
-0x086: 763f00000000000000   | 	jg Loop			# if so, goto Loop:
+0x09f: 40360000000000000000 |     rmmovq %rbx,(%rsi)
+0x0a9: 40560800000000000000 |     rmmovq %rbp,8(%rsi)
+0x0b3: 40161000000000000000 |     rmmovq %rcx,16(%rsi)
+0x0bd: 40861800000000000000 |     rmmovq %r8,24(%rsi)
+0x0c7: 40962000000000000000 |     rmmovq %r9,32(%rsi)
+0x0d1: 40a62800000000000000 |     rmmovq %r10,40(%rsi)
+0x0db: 40b63000000000000000 |     rmmovq %r11,48(%rsi)
+0x0e5: 40c63800000000000000 |     rmmovq %r12,56(%rsi)
+0x0ef: 40d64000000000000000 |     rmmovq %r13,64(%rsi)
+                            |     #依次判断读出的数的正负
+                            | # ele 1
+0x0f9: 6233                 |     andq %rbx,%rbx
+0x0fb: 710e01000000000000   |     jle judge_1
+0x104: c0f00100000000000000 |     iaddq $1,%rax
+0x10e:                      | judge_1:
+                            | # ele 2
+0x10e: 6255                 |     andq %rbp,%rbp
+0x110: 712301000000000000   |     jle judge_2
+0x119: c0f00100000000000000 |     iaddq $1,%rax
+0x123:                      | judge_2:
+                            | # ele 3
+0x123: 6211                 |     andq %rcx,%rcx
+0x125: 713801000000000000   |     jle judge_3
+0x12e: c0f00100000000000000 |     iaddq $1,%rax
+0x138:                      | judge_3:
+                            | # ele 4
+0x138: 6288                 |     andq %r8,%r8
+0x13a: 714d01000000000000   |     jle judge_4
+0x143: c0f00100000000000000 |     iaddq $1,%rax
+0x14d:                      | judge_4:
+                            | # ele 5
+0x14d: 6299                 |     andq %r9,%r9
+0x14f: 716201000000000000   |     jle judge_5
+0x158: c0f00100000000000000 |     iaddq $1,%rax
+0x162:                      | judge_5:
+                            | # ele 6
+0x162: 62aa                 |     andq %r10,%r10
+0x164: 717701000000000000   |     jle judge_6
+0x16d: c0f00100000000000000 |     iaddq $1,%rax
+0x177:                      | judge_6:
+                            | # ele 7
+0x177: 62bb                 |     andq %r11,%r11
+0x179: 718c01000000000000   |     jle judge_7
+0x182: c0f00100000000000000 |     iaddq $1,%rax
+0x18c:                      | judge_7:
+                            | # ele 8
+0x18c: 62cc                 |     andq %r12,%r12
+0x18e: 71a101000000000000   |     jle judge_8
+0x197: c0f00100000000000000 |     iaddq $1,%rax
+0x1a1:                      | judge_8:
+                            | # ele 9
+0x1a1: 62dd                 |     andq %r13,%r13
+0x1a3: 71b601000000000000   |     jle judge_9
+0x1ac: c0f00100000000000000 |     iaddq $1,%rax
+0x1b6:                      | judge_9:
+0x1b6: c0f74800000000000000 |     iaddq $72,%rdi #src+=9
+0x1c0: c0f64800000000000000 |     iaddq $72,%rsi #dst+=9
+0x1ca: c0f2f7ffffffffffffff |     iaddq $-9,%rdx #len-=9
+0x1d4: 754500000000000000   |     jge Loop 
+                            | 
+0x1dd:                      | Remaining_elements:#余数处理
+0x1dd: c0f20900000000000000 |     iaddq $9,%rdx
+0x1e7: 73bd03000000000000   |     je Done #余数为0，则结束循环
+                            |     #否则，一个一个处理过去
+                            | # elements 1
+0x1f0: 50370000000000000000 |     mrmovq (%rdi),%rbx
+0x1fa: 40360000000000000000 |     rmmovq %rbx,(%rsi)
+0x204: 6233                 |     andq %rbx,%rbx # val<=0?
+0x206: 711902000000000000   |     jle judger_1
+0x20f: c0f00100000000000000 |     iaddq $1,%rax
+0x219:                      | judger_1:
+0x219: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x223: 73bd03000000000000   |     je Done
+                            | # elements 2
+0x22c: 50370800000000000000 |     mrmovq 8(%rdi),%rbx
+0x236: 40360800000000000000 |     rmmovq %rbx,8(%rsi)
+0x240: 6233                 |     andq %rbx,%rbx
+0x242: 715502000000000000   |     jle judger_2
+0x24b: c0f00100000000000000 |     iaddq $1,%rax
+0x255:                      | judger_2:
+0x255: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x25f: 73bd03000000000000   |     je Done
+                            | # elements 3
+0x268: 50371000000000000000 |     mrmovq 16(%rdi),%rbx
+0x272: 40361000000000000000 |     rmmovq %rbx,16(%rsi)
+0x27c: 6233                 |     andq %rbx,%rbx
+0x27e: 719102000000000000   |     jle judger_3
+0x287: c0f00100000000000000 |     iaddq $1,%rax
+0x291:                      | judger_3:
+0x291: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x29b: 73bd03000000000000   |     je Done
+                            | # elements 4
+0x2a4: 50371800000000000000 |     mrmovq 24(%rdi),%rbx
+0x2ae: 40361800000000000000 |     rmmovq %rbx,24(%rsi)
+0x2b8: 6233                 |     andq %rbx,%rbx
+0x2ba: 71cd02000000000000   |     jle judger_4
+0x2c3: c0f00100000000000000 |     iaddq $1,%rax
+0x2cd:                      | judger_4:
+0x2cd: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x2d7: 73bd03000000000000   |     je Done
+                            | # elements 5
+0x2e0: 50372000000000000000 |     mrmovq 32(%rdi),%rbx
+0x2ea: 40362000000000000000 |     rmmovq %rbx,32(%rsi)
+0x2f4: 6233                 |     andq %rbx,%rbx
+0x2f6: 710903000000000000   |     jle judger_5
+0x2ff: c0f00100000000000000 |     iaddq $1,%rax
+0x309:                      | judger_5:
+0x309: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x313: 73bd03000000000000   |     je Done
+                            | # elements 6
+0x31c: 50372800000000000000 |     mrmovq 40(%rdi),%rbx
+0x326: 40362800000000000000 |     rmmovq %rbx,40(%rsi)
+0x330: 6233                 |     andq %rbx,%rbx
+0x332: 714503000000000000   |     jle judger_6
+0x33b: c0f00100000000000000 |     iaddq $1,%rax
+0x345:                      | judger_6:
+0x345: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x34f: 73bd03000000000000   |     je Done
+                            | # elements 7
+0x358: 50373000000000000000 |     mrmovq 48(%rdi),%rbx
+0x362: 40363000000000000000 |     rmmovq %rbx,48(%rsi)
+0x36c: 6233                 |     andq %rbx,%rbx
+0x36e: 718103000000000000   |     jle judger_7
+0x377: c0f00100000000000000 |     iaddq $1,%rax
+0x381:                      | judger_7:
+0x381: c0f2ffffffffffffffff |     iaddq $-1,%rdx
+0x38b: 73bd03000000000000   |     je Done
+                            | # elements 8
+0x394: 50373800000000000000 |     mrmovq 56(%rdi),%rbx
+0x39e: 40363800000000000000 |     rmmovq %rbx,56(%rsi)
+0x3a8: 6233                 |     andq %rbx,%rbx
+0x3aa: 71bd03000000000000   |     jle Done
+0x3b3: c0f00100000000000000 |     iaddq $1,%rax
                             | ##################################################################
                             | # Do not modify the following section of code
                             | # Function epilogue.
-0x08f:                      | Done:
-0x08f: 90                   | 	ret
+0x3bd:                      | Done:
+0x3bd: 90                   |     ret
                             | ##################################################################
                             | # Keep the following label at the end of your function
-0x090:                      | End:
+0x3be:                      | End:
                             | #/* $end ncopy-ys */
-0x090:                      | EndFun:
+0x3be:                      | EndFun:
                             | 
                             | ###############################
                             | # Source and destination blocks 
                             | ###############################
-0x090:                      | 	.align 8
-0x090:                      | src:
-0x090: ffffffffffffffff     | 	.quad -1
-0x098: 0200000000000000     | 	.quad 2
-0x0a0: 0300000000000000     | 	.quad 3
-0x0a8: fcffffffffffffff     | 	.quad -4
-0x0b0: fadebc0000000000     | 	.quad 0xbcdefa # This shouldn't get moved
+0x3c0:                      | 	.align 8
+0x3c0:                      | src:
+0x3c0: 0100000000000000     | 	.quad 1
+0x3c8: feffffffffffffff     | 	.quad -2
+0x3d0: fdffffffffffffff     | 	.quad -3
+0x3d8: 0400000000000000     | 	.quad 4
+0x3e0: fadebc0000000000     | 	.quad 0xbcdefa # This shouldn't get moved
                             | 
-0x0c0:                      | 	.align 16
-0x0c0:                      | Predest:
-0x0c0: fadebc0000000000     | 	.quad 0xbcdefa
-0x0c8:                      | dest:
-0x0c8: abefcd0000000000     | 	.quad 0xcdefab
-0x0d0: abefcd0000000000     | 	.quad 0xcdefab
-0x0d8: abefcd0000000000     | 	.quad 0xcdefab
-0x0e0: abefcd0000000000     | 	.quad 0xcdefab
-0x0e8:                      | Postdest:
-0x0e8: bcfade0000000000     | 	.quad 0xdefabc
+0x3f0:                      | 	.align 16
+0x3f0:                      | Predest:
+0x3f0: fadebc0000000000     | 	.quad 0xbcdefa
+0x3f8:                      | dest:
+0x3f8: abefcd0000000000     | 	.quad 0xcdefab
+0x400: abefcd0000000000     | 	.quad 0xcdefab
+0x408: abefcd0000000000     | 	.quad 0xcdefab
+0x410: abefcd0000000000     | 	.quad 0xcdefab
+0x418:                      | Postdest:
+0x418: bcfade0000000000     | 	.quad 0xdefabc
                             | 
-0x0f0:                      | .align 8
+0x420:                      | .align 8
                             | # Run time stack
-0x0f0: 0000000000000000     | 	.quad 0
-0x0f8: 0000000000000000     | 	.quad 0
-0x100: 0000000000000000     | 	.quad 0
-0x108: 0000000000000000     | 	.quad 0
-0x110: 0000000000000000     | 	.quad 0
-0x118: 0000000000000000     | 	.quad 0
-0x120: 0000000000000000     | 	.quad 0
-0x128: 0000000000000000     | 	.quad 0
-0x130: 0000000000000000     | 	.quad 0
-0x138: 0000000000000000     | 	.quad 0
-0x140: 0000000000000000     | 	.quad 0
-0x148: 0000000000000000     | 	.quad 0
-0x150: 0000000000000000     | 	.quad 0
-0x158: 0000000000000000     | 	.quad 0
-0x160: 0000000000000000     | 	.quad 0
-0x168: 0000000000000000     | 	.quad 0
+0x420: 0000000000000000     | 	.quad 0
+0x428: 0000000000000000     | 	.quad 0
+0x430: 0000000000000000     | 	.quad 0
+0x438: 0000000000000000     | 	.quad 0
+0x440: 0000000000000000     | 	.quad 0
+0x448: 0000000000000000     | 	.quad 0
+0x450: 0000000000000000     | 	.quad 0
+0x458: 0000000000000000     | 	.quad 0
+0x460: 0000000000000000     | 	.quad 0
+0x468: 0000000000000000     | 	.quad 0
+0x470: 0000000000000000     | 	.quad 0
+0x478: 0000000000000000     | 	.quad 0
+0x480: 0000000000000000     | 	.quad 0
+0x488: 0000000000000000     | 	.quad 0
+0x490: 0000000000000000     | 	.quad 0
+0x498: 0000000000000000     | 	.quad 0
                             | 
-0x170:                      | Stack:
+0x4a0:                      | Stack:

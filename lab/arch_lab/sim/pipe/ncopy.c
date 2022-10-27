@@ -23,6 +23,18 @@ word_t ncopy(word_t *src, word_t *dst, word_t len)
     }
     return count;
 }
+/*
+for(;len>0;len--)
+{
+    val = *src++
+    *dst++=val
+    if(val>0)
+        count++;
+}
+
+展开
+for(;len>)
+*/
 /* $end ncopy */
 
 int main()

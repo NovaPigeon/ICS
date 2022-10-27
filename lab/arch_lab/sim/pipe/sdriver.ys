@@ -12,6 +12,11 @@ main:	irmovq Stack, %rsp  	# Set up stack pointer
 	halt			# should halt with num nonzeros in %rax
 StartFun:
 #/* $begin ncopy-ys */
+# 寿晨宸 2100012945 #
+# 1. 将所有能改成 iaddq 的 改成 iaddq
+# 2. 删去 xorq %rax,%rax，只调用一次，初始时就为零
+# 3. 将 iaddq $-1,%rdx 移动到 jg Loop 上方，删去 andq %rdx,%rdx，利用 iaddq 设置的条件码
+# 4. 循环展开 9 路
 ##################################################################
 # ncopy.ys - Copy a src block of len words to dst.
 # Return the number of positive words (>0) contained in src.
@@ -28,29 +33,158 @@ ncopy:
 
 ##################################################################
 # You can modify this portion
-	# Loop header
-	xorq %rax,%rax		# count = 0;
-	andq %rdx,%rdx		# len <= 0?
-	jle Done		# if so, goto Done:
+    # Loop header
+    iaddq $-9,%rdx
+    jl Remaining_elements #如果len<9(同时作为循环展开不越界的控制)
+Loop: #同时取9个数，并将这9个数存入src
+    mrmovq (%rdi),%rbx
+    mrmovq 8(%rdi),%rbp
+    mrmovq 16(%rdi),%rcx
+    mrmovq 24(%rdi),%r8
+    mrmovq 32(%rdi),%r9
+    mrmovq 40(%rdi),%r10
+    mrmovq 48(%rdi),%r11
+    mrmovq 56(%rdi),%r12
+    mrmovq 64(%rdi),%r13
 
-Loop:	mrmovq (%rdi), %r10	# read val from src...
-	rmmovq %r10, (%rsi)	# ...and store it to dst
-	andq %r10, %r10		# val <= 0?
-	jle Npos		# if so, goto Npos:
-	irmovq $1, %r10
-	addq %r10, %rax		# count++
-Npos:	irmovq $1, %r10
-	subq %r10, %rdx		# len--
-	irmovq $8, %r10
-	addq %r10, %rdi		# src++
-	addq %r10, %rsi		# dst++
-	andq %rdx,%rdx		# len > 0?
-	jg Loop			# if so, goto Loop:
+    rmmovq %rbx,(%rsi)
+    rmmovq %rbp,8(%rsi)
+    rmmovq %rcx,16(%rsi)
+    rmmovq %r8,24(%rsi)
+    rmmovq %r9,32(%rsi)
+    rmmovq %r10,40(%rsi)
+    rmmovq %r11,48(%rsi)
+    rmmovq %r12,56(%rsi)
+    rmmovq %r13,64(%rsi)
+    #依次判断读出的数的正负
+# ele 1
+    andq %rbx,%rbx
+    jle judge_1
+    iaddq $1,%rax
+judge_1:
+# ele 2
+    andq %rbp,%rbp
+    jle judge_2
+    iaddq $1,%rax
+judge_2:
+# ele 3
+    andq %rcx,%rcx
+    jle judge_3
+    iaddq $1,%rax
+judge_3:
+# ele 4
+    andq %r8,%r8
+    jle judge_4
+    iaddq $1,%rax
+judge_4:
+# ele 5
+    andq %r9,%r9
+    jle judge_5
+    iaddq $1,%rax
+judge_5:
+# ele 6
+    andq %r10,%r10
+    jle judge_6
+    iaddq $1,%rax
+judge_6:
+# ele 7
+    andq %r11,%r11
+    jle judge_7
+    iaddq $1,%rax
+judge_7:
+# ele 8
+    andq %r12,%r12
+    jle judge_8
+    iaddq $1,%rax
+judge_8:
+# ele 9
+    andq %r13,%r13
+    jle judge_9
+    iaddq $1,%rax
+judge_9:
+    iaddq $72,%rdi #src+=9
+    iaddq $72,%rsi #dst+=9
+    iaddq $-9,%rdx #len-=9
+    jge Loop 
+
+Remaining_elements:#余数处理
+    iaddq $9,%rdx
+    je Done #余数为0，则结束循环
+    #否则，一个一个处理过去
+# elements 1
+    mrmovq (%rdi),%rbx
+    rmmovq %rbx,(%rsi)
+    andq %rbx,%rbx # val<=0?
+    jle judger_1
+    iaddq $1,%rax
+judger_1:
+    iaddq $-1,%rdx
+    je Done
+# elements 2
+    mrmovq 8(%rdi),%rbx
+    rmmovq %rbx,8(%rsi)
+    andq %rbx,%rbx
+    jle judger_2
+    iaddq $1,%rax
+judger_2:
+    iaddq $-1,%rdx
+    je Done
+# elements 3
+    mrmovq 16(%rdi),%rbx
+    rmmovq %rbx,16(%rsi)
+    andq %rbx,%rbx
+    jle judger_3
+    iaddq $1,%rax
+judger_3:
+    iaddq $-1,%rdx
+    je Done
+# elements 4
+    mrmovq 24(%rdi),%rbx
+    rmmovq %rbx,24(%rsi)
+    andq %rbx,%rbx
+    jle judger_4
+    iaddq $1,%rax
+judger_4:
+    iaddq $-1,%rdx
+    je Done
+# elements 5
+    mrmovq 32(%rdi),%rbx
+    rmmovq %rbx,32(%rsi)
+    andq %rbx,%rbx
+    jle judger_5
+    iaddq $1,%rax
+judger_5:
+    iaddq $-1,%rdx
+    je Done
+# elements 6
+    mrmovq 40(%rdi),%rbx
+    rmmovq %rbx,40(%rsi)
+    andq %rbx,%rbx
+    jle judger_6
+    iaddq $1,%rax
+judger_6:
+    iaddq $-1,%rdx
+    je Done
+# elements 7
+    mrmovq 48(%rdi),%rbx
+    rmmovq %rbx,48(%rsi)
+    andq %rbx,%rbx
+    jle judger_7
+    iaddq $1,%rax
+judger_7:
+    iaddq $-1,%rdx
+    je Done
+# elements 8
+    mrmovq 56(%rdi),%rbx
+    rmmovq %rbx,56(%rsi)
+    andq %rbx,%rbx
+    jle Done
+    iaddq $1,%rax
 ##################################################################
 # Do not modify the following section of code
 # Function epilogue.
 Done:
-	ret
+    ret
 ##################################################################
 # Keep the following label at the end of your function
 End:
@@ -62,10 +196,10 @@ EndFun:
 ###############################
 	.align 8
 src:
-	.quad -1
-	.quad 2
-	.quad 3
-	.quad -4
+	.quad 1
+	.quad -2
+	.quad -3
+	.quad 4
 	.quad 0xbcdefa # This shouldn't get moved
 
 	.align 16

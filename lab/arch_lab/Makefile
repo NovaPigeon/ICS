@@ -3,7 +3,7 @@
 ####################################################
 
 # IMPORTANT: Change the USER variable to your unique UserID
-USER = changeMe
+USER = 2100012945@stu.pku.edu.cn
 
 # Use this rule to build the handin file for the whole lab.
 handin:

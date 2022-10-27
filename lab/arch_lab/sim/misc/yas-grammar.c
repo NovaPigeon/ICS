@@ -1,5 +1,5 @@
 
-#line 2 "lex.yy.c"
+#line 3 "lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -729,7 +729,7 @@ char *yytext;
 #line 3 "yas-grammar.lex"
  #include "yas.h"
 
-#line 732 "lex.yy.c"
+#line 733 "lex.yy.c"
 
 #define INITIAL 0
 #define ERR 1
@@ -960,7 +960,7 @@ YY_DECL
 #line 17 "yas-grammar.lex"
 
 
-#line 963 "lex.yy.c"
+#line 964 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1109,7 +1109,7 @@ YY_RULE_SETUP
 #line 35 "yas-grammar.lex"
 ECHO;
 	YY_BREAK
-#line 1112 "lex.yy.c"
+#line 1113 "lex.yy.c"
 			case YY_STATE_EOF(INITIAL):
 			case YY_STATE_EOF(ERR):
 			case YY_STATE_EOF(COM):
