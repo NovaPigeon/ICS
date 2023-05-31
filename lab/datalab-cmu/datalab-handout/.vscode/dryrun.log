@@ -1,5 +1,0 @@
-make --dry-run --keep-going --print-directory
-make: Entering directory `/Users/shouchenchen/Desktop/CS/ICS/lab/datalab/datalab-handout'
-make: Nothing to be done for `all'.
-make: Leaving directory `/Users/shouchenchen/Desktop/CS/ICS/lab/datalab/datalab-handout'
- 
